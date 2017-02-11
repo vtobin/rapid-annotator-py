@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block head %}
+  {{ super() }}
+  <style type="text/css">
+    .important { color: #336699; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<h1>{{ tagrun.displayName }}</h1>
+
+<div id="buttonZone"></div>
+
+<div id="messageZone"></div>
+
+<div id="imageZone"><img id="targetImg"></div>
+
+{% endblock %}
+
+{% block literalscript %}
+    {{ super() }}
+
+    var tagRunId = "{{ tagrun.name }}";
+    var tags = {{ tagrun.tags | safe }};
+    var initialImage = "{{tagrun.initialImage}}";
+    var imageIndex = 0;
+    var responseReady = false;
+
+    function handleResponse(response) {
+        if (response.success) {
+            if (response.finished) {
+                $("#targetImg").hide();
+                $("#buttonZone").hide();
+                $("#messageZone").html("<p>Thanks for participating!</p>");
+            } else {
+                responseReady = true;
+                imageIndex += 1;
+                $("#targetImg").attr("src", response.nextImage);
+            }
+        }
+    };
+
+    function sendResponse(val) {
+        if (! responseReady) {
+            return;
+        }
+        // TODO: We want to get user from a cookied session,
+        // and not encode it into the URL.
+        responseReady = false;
+        $.ajax({
+            url: "/tagrun/" + tagRunId + "/response"
+                + "?user=" + getUrlVars()["user"],
+            type: "POST",
+            data: JSON.stringify({
+                tagged: val,
+                imageIndex: imageIndex,
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: handleResponse
+        });
+    }
+
+    function registerTags(tagDict) {
+        var keys = Object.keys(tagDict).map(function(i) {
+            return i.toString();
+        });
+        for (var k in tagDict) {
+            if (tagDict.hasOwnProperty(k)) {
+                var str = k + ") " + tagDict[k];
+                var button = document.createElement("button");
+                button.innerHTML = str;
+                button.id = "btn_" + k;
+                button.setAttribute("onclick", "sendResponse(" + k + ");");
+                document.getElementById("buttonZone").appendChild(button);
+            }
+        }
+        $(document).on("keypress.rapidAnnotator", function (e) {
+            if (keys.indexOf(e.key) > -1) {
+                sendResponse(e.key);
+            }
+        });
+        responseReady = true;
+    };
+
+    function endKeypressListener() {
+        $(document).off("keypress.rapidAnnotator");
+    }
+    registerTags(tags);
+    $("#targetImg").attr("src", initialImage);
+    // TODO: This is needed only for the workaround in sendResponse,
+    // and can be removed when we have sessions.
+    // Read a page's GET URL variables and return them as an associative array.
+    function getUrlVars() {
+        var vars = [], hash;
+        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+        return vars;
+    }
+{% endblock %}
