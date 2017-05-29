@@ -1,0 +1,9 @@
+Starting requirements for Rapid Annotator: Python style
+
+X. Should replicate functionality of Perl Rapid Annotator for images. 
+2. Should duplicate functionality of 1 for video files. (This would mean, for now, tagging individual video snippets as a whole. Sub-second time resolution on the video player would be preferred.) 
+3. Should be able to run either locally, on a laptop, with all files and components on the local computer — OR in the cloud (with sensible hosting options).
+
+Strongly desired:
+4. Would be nice to have an admin interface for setting up data/annotation tagging runs. Would be extra nice if this interface had a simple way for people to use my cloud installation of Python Rapid Annotator with their own image/video hosting source (so, either with my S3 account or with their own—different S3, imgur, whatever).
+5. Should have separate access/security for setting up/administering tagging runs and doing the actual tagging. But neither should be just open to the public.
